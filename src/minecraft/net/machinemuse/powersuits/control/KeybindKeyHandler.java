@@ -16,13 +16,17 @@ import java.util.EnumSet;
 
 @SideOnly(Side.CLIENT)
 public class KeybindKeyHandler extends KeyHandler {
-    public static KeyBinding openKeybindGUI = new KeyBinding("Open Muse Keybind GUI", Keyboard.KEY_K);
-    public static KeyBinding goDownKey = new KeyBinding("Go Down (Flight Control)", Keyboard.KEY_Z);
-    public static KeyBinding cycleToolBackward = new KeyBinding("Cycle Tool Backward", -1);
-    public static KeyBinding cycleToolForward = new KeyBinding("Cycle Tool Forward", -1);
+    public static KeyBinding openKeybindGUI = new KeyBinding("Open MPS Keybind GUI", Keyboard.KEY_K);
+    public static KeyBinding goDownKey = new KeyBinding("Go Down (MPS Flight Control)", Keyboard.KEY_Z);
+    public static KeyBinding cycleToolBackward = new KeyBinding("Cycle Tool Backward (MPS)", -1);
+    public static KeyBinding cycleToolForward = new KeyBinding("Cycle Tool Forward (MPS)", -1);
+    public static KeyBinding zoom = new KeyBinding("Zoom (MPS)", Keyboard.KEY_Y);
+    public static KeyBinding openCosmeticGUI = new KeyBinding("Cosmetic (MPS)", Keyboard.KEY_L);
+    public static KeyBinding[] keybindArray = new KeyBinding[]{openKeybindGUI, goDownKey, cycleToolBackward, cycleToolForward, zoom, openCosmeticGUI};
+    public static boolean[] repeats = new boolean[keybindArray.length];
 
     public KeybindKeyHandler() {
-        super(new KeyBinding[]{openKeybindGUI, goDownKey, cycleToolBackward, cycleToolForward}, new boolean[]{false, false, false, false});
+        super(keybindArray, repeats);
     }
 
     @Override
@@ -44,6 +48,12 @@ public class KeybindKeyHandler extends KeyHandler {
                 player.openGui(ModularPowersuits.instance, 1, world, 0, 0, 0);
             }
         }
+        if (kb.equals(openCosmeticGUI)) {
+            World world = Minecraft.getMinecraft().theWorld;
+            if (Minecraft.getMinecraft().inGameHasFocus) {
+                player.openGui(ModularPowersuits.instance, 3, world, 0, 0, 0);
+            }
+        }
         if (kb.equals(goDownKey)) {
             PlayerInputMap.getInputMapFor(player.username).downKey = true;
         }
@@ -59,6 +69,7 @@ public class KeybindKeyHandler extends KeyHandler {
 
     @Override
     public void keyUp(EnumSet<TickType> types, KeyBinding kb, boolean tickEnd) {
+        EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
         if (Minecraft.getMinecraft().thePlayer != null && kb.equals(goDownKey)) {
             PlayerInputMap.getInputMapFor(Minecraft.getMinecraft().thePlayer.username).downKey = false;
         }

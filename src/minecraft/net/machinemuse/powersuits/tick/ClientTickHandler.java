@@ -2,6 +2,7 @@ package net.machinemuse.powersuits.tick;
 
 import cpw.mods.fml.common.ITickHandler;
 import cpw.mods.fml.common.TickType;
+import cpw.mods.fml.common.network.Player;
 import net.machinemuse.api.IModularItem;
 import net.machinemuse.general.gui.clickable.ClickableKeybinding;
 import net.machinemuse.powersuits.common.Config;
@@ -26,7 +27,7 @@ import java.util.EnumSet;
  */
 public class ClientTickHandler implements ITickHandler {
     protected int slotSelected = -1;
-    protected int dWheel;
+    public static int dWheel;
 
     @Override
     public void tickStart(EnumSet<TickType> type, Object... tickData) {
@@ -48,16 +49,14 @@ public class ClientTickHandler implements ITickHandler {
     @Override
     public void tickEnd(EnumSet<TickType> type, Object... tickData) {
         EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
-
         if (player != null && MuseItemUtils.getModularItemsInInventory(player).size() > 0) {
-            if (slotSelected > -1) {
+            if (slotSelected > -1 && dWheel != Mouse.getDWheel()) {
                 player.inventory.currentItem = slotSelected;
                 Minecraft.getMinecraft().playerController.updateController();
                 ItemStack stack = player.inventory.getStackInSlot(slotSelected);
                 MuseItemUtils.cycleMode(stack, player, dWheel - Mouse.getDWheel());
-                dWheel = Mouse.getDWheel();
-                slotSelected = -1;
             }
+            slotSelected = -1;
             PlayerInputMap inputmap = PlayerInputMap.getInputMapFor(player.username);
             inputmap.forwardKey = Math.signum(player.movementInput.moveForward);
             inputmap.strafeKey = Math.signum(player.movementInput.moveStrafe);
@@ -69,7 +68,7 @@ public class ClientTickHandler implements ITickHandler {
 
             if (inputmap.hasChanged()) {
                 inputmap.refresh();
-                MusePacket inputPacket = new MusePacketPlayerUpdate(player, inputmap);
+                MusePacket inputPacket = new MusePacketPlayerUpdate((Player) player, inputmap);
                 player.sendQueue.addToSendQueue(inputPacket.getPacket250());
             }
         }
