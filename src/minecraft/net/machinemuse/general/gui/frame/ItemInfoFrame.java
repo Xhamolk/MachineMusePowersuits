@@ -5,7 +5,7 @@ import net.machinemuse.general.geometry.Colour;
 import net.machinemuse.general.geometry.MusePoint2D;
 import net.machinemuse.general.gui.clickable.ClickableItem;
 import net.machinemuse.utils.MuseItemUtils;
-import net.machinemuse.utils.MuseRenderer;
+import net.machinemuse.utils.render.MuseRenderer;
 import net.minecraft.entity.player.EntityPlayer;
 import org.lwjgl.opengl.GL11;
 
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ItemInfoFrame extends ScrollableFrame {
-    public static final double SCALEFACTOR = 0.5;
+    public static final double SCALEFACTOR = 1;
     protected ItemSelectionFrame target;
     protected EntityPlayer player;
     protected List<String> info;

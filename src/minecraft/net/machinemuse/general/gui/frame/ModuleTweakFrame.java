@@ -6,13 +6,13 @@ import net.machinemuse.api.IPropertyModifier;
 import net.machinemuse.general.geometry.Colour;
 import net.machinemuse.general.geometry.MusePoint2D;
 import net.machinemuse.general.gui.clickable.ClickableItem;
-import net.machinemuse.general.gui.clickable.ClickableSlider;
+import net.machinemuse.general.gui.clickable.ClickableTinkerSlider;
 import net.machinemuse.powersuits.network.MusePacket;
 import net.machinemuse.powersuits.network.packets.MusePacketTweakRequest;
 import net.machinemuse.powersuits.powermodule.PowerModule;
 import net.machinemuse.powersuits.powermodule.PropertyModifierLinearAdditive;
 import net.machinemuse.utils.MuseItemUtils;
-import net.machinemuse.utils.MuseRenderer;
+import net.machinemuse.utils.render.MuseRenderer;
 import net.machinemuse.utils.MuseStringUtils;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -22,12 +22,12 @@ import org.lwjgl.opengl.GL11;
 import java.util.*;
 
 public class ModuleTweakFrame extends ScrollableFrame {
-    protected static double SCALERATIO = 0.5;
+    protected static double SCALERATIO = 0.75;
     protected ItemSelectionFrame itemTarget;
     protected ModuleSelectionFrame moduleTarget;
-    protected List<ClickableSlider> sliders;
+    protected List<ClickableTinkerSlider> sliders;
     protected Map<String, Double> propertyStrings;
-    protected ClickableSlider selectedSlider;
+    protected ClickableTinkerSlider selectedSlider;
     protected EntityClientPlayerMP player;
 
     public ModuleTweakFrame(
@@ -67,16 +67,16 @@ public class ModuleTweakFrame extends ScrollableFrame {
     @Override
     public void draw() {
         if (sliders != null) {
-            MuseRenderer.drawCenteredString("Tinker", (border.left() + border.right()) / 4, border.top() / 2 + 2);
             GL11.glPushMatrix();
             GL11.glScaled(SCALERATIO, SCALERATIO, SCALERATIO);
             super.draw();
-            for (ClickableSlider slider : sliders) {
+            MuseRenderer.drawCenteredString("Tinker", (border.left() + border.right()) / 2, border.top() + 2);
+            for (ClickableTinkerSlider slider : sliders) {
                 slider.draw();
             }
-            int nexty = (int) (sliders.size() * 24 + border.top() + 24);
+            int nexty = (int) (sliders.size() * 20 + border.top() + 14);
             for (Map.Entry<String, Double> property : propertyStrings.entrySet()) {
-                nexty += 8;
+                nexty += 9;
                 String[] str = {property.getKey() + ':',
                         MuseStringUtils.formatNumberFromUnits(property.getValue(), PowerModule.getUnit(property.getKey()))};
                 MuseRenderer.drawStringsJustified(Arrays.asList(str), border.left() + 4, border.right() - 4, nexty);
@@ -109,8 +109,8 @@ public class ModuleTweakFrame extends ScrollableFrame {
         sliders = new LinkedList();
         int y = 0;
         for (String tweak : tweaks) {
-            y += 24;
-            ClickableSlider slider = new ClickableSlider(
+            y += 20;
+            ClickableTinkerSlider slider = new ClickableTinkerSlider(
                     new MusePoint2D((border.left() + border.right()) / 2, border.top() + y),
                     border.right() - border.left() - 8,
                     moduleTag, tweak);
@@ -124,7 +124,7 @@ public class ModuleTweakFrame extends ScrollableFrame {
         y /= SCALERATIO;
         if (button == 0) {
             if (sliders != null) {
-                for (ClickableSlider slider : sliders) {
+                for (ClickableTinkerSlider slider : sliders) {
                     if (slider.hitBox(x, y)) {
                         selectedSlider = slider;
                     }
@@ -138,8 +138,8 @@ public class ModuleTweakFrame extends ScrollableFrame {
         if (selectedSlider != null && itemTarget.getSelectedItem() != null && moduleTarget.getSelectedModule() != null) {
             ClickableItem item = itemTarget.getSelectedItem();
             IPowerModule module = moduleTarget.getSelectedModule().getModule();
-            MusePacket tweakRequest = new MusePacketTweakRequest((Player) player, item.inventorySlot, module.getName(), selectedSlider.getName(),
-                    selectedSlider.getValue());
+            MusePacket tweakRequest = new MusePacketTweakRequest((Player) player, item.inventorySlot, module.getName(), selectedSlider.name(),
+                    selectedSlider.value());
             player.sendQueue.addToSendQueue(tweakRequest.getPacket250());
         }
         if (button == 0) {

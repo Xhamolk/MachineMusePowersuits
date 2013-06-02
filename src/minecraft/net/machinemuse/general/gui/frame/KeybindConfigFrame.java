@@ -12,7 +12,7 @@ import net.machinemuse.general.gui.clickable.IClickable;
 import net.machinemuse.powersuits.common.Config;
 import net.machinemuse.powersuits.control.KeybindManager;
 import net.machinemuse.utils.MuseItemUtils;
-import net.machinemuse.utils.MuseRenderer;
+import net.machinemuse.utils.render.MuseRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import org.lwjgl.input.Keyboard;
@@ -71,6 +71,18 @@ public class KeybindConfigFrame implements IGuiFrame {
             if (newKeybindButton.hitBox(x, y)) {
                 selecting = true;
             }
+        }
+        if (button > 2) {
+            int key = button - 100;
+            if (KeyBinding.hash.containsItem(key)) {
+                takenTime = System.currentTimeMillis();
+            }
+            if (!KeyBinding.hash.containsItem(key)) {
+                addKeybind(key, true);
+            } else if (Config.allowConflictingKeybinds()) {
+                addKeybind(key, false);
+            }
+            selecting = false;
         }
     }
 
@@ -201,11 +213,13 @@ public class KeybindConfigFrame implements IGuiFrame {
         MuseRenderer.on2D();
         if (selecting) {
             MuseRenderer.drawCenteredString("Press Key", center.x(), center.y());
+            MuseRenderer.off2D();
+            MuseRenderer.blendingOff();
             return;
         }
         newKeybindButton.draw();
         trashKeybindButton.draw();
-        MuseRenderer.TEXTURE_MAP = MuseRenderer.ITEM_TEXTURE_QUILT;
+        MuseRenderer.pushTexture(MuseRenderer.ITEM_TEXTURE_QUILT);
         MuseRenderer.drawCenteredString("Use 'new' to bind new keys.", center.x(), center.y() + 40);
         MuseRenderer.drawCenteredString("Drag and drop modules to bind them to keys.", center.x(), center.y() + 50);
         MuseRenderer.drawCenteredString("Drop keys on 'trash' to unbind them.", center.x(), center.y() + 60);
@@ -224,6 +238,7 @@ public class KeybindConfigFrame implements IGuiFrame {
         }
         MuseRenderer.off2D();
         MuseRenderer.blendingOff();
+        MuseRenderer.popTexture();
     }
 
     @Override

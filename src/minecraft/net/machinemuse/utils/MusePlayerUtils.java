@@ -15,7 +15,10 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.chunk.Chunk;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 public class MusePlayerUtils {
@@ -49,19 +52,23 @@ public class MusePlayerUtils {
                 AxisAlignedBB aabb = entityHit.boundingBox.expand((double) border, (double) border, (double) border);
                 MovingObjectPosition hitMOP = aabb.calculateIntercept(playerPosition, playerViewOffset);
 
-                if (aabb.isVecInside(playerPosition)) {
-                    if (0.0D < closestEntity || closestEntity == 0.0D) {
-                        pickedEntity = new MovingObjectPosition(entityHit);
-                        pickedEntity.hitVec = hitMOP.hitVec;
-                        closestEntity = 0.0D;
-                    }
-                } else if (hitMOP != null) {
-                    double distance = playerPosition.distanceTo(hitMOP.hitVec);
+                if (hitMOP != null) {
+                    if (aabb.isVecInside(playerPosition)) {
+                        if (0.0D < closestEntity || closestEntity == 0.0D) {
+                            pickedEntity = new MovingObjectPosition(entityHit);
+                            if (pickedEntity != null) {
+                                pickedEntity.hitVec = hitMOP.hitVec;
+                                closestEntity = 0.0D;
+                            }
+                        }
+                    } else {
+                        double distance = playerPosition.distanceTo(hitMOP.hitVec);
 
-                    if (distance < closestEntity || closestEntity == 0.0D) {
-                        pickedEntity = new MovingObjectPosition(entityHit);
-                        pickedEntity.hitVec = hitMOP.hitVec;
-                        closestEntity = distance;
+                        if (distance < closestEntity || closestEntity == 0.0D) {
+                            pickedEntity = new MovingObjectPosition(entityHit);
+                            pickedEntity.hitVec = hitMOP.hitVec;
+                            closestEntity = distance;
+                        }
                     }
                 }
             }
@@ -167,14 +174,14 @@ public class MusePlayerUtils {
         }
     }
 
-    public static void thrust(EntityPlayer player, double thrust, double jetEnergy, boolean flightControl) {
+    public static double thrust(EntityPlayer player, double thrust, boolean flightControl) {
         PlayerInputMap movementInput = PlayerInputMap.getInputMapFor(player.username);
         boolean jumpkey = movementInput.jumpKey;
         float forwardkey = movementInput.forwardKey;
         float strafekey = movementInput.strafeKey;
         boolean downkey = movementInput.downKey;
         boolean sneakkey = movementInput.sneakKey;
-        double totalEnergyDrain = 0;
+        double thrustUsed = 0;
         if (flightControl) {
             Vec3 desiredDirection = player.getLookVec().normalize();
             double strafeX = desiredDirection.zCoord;
@@ -182,7 +189,7 @@ public class MusePlayerUtils {
             double scaleStrafe = (strafeX * strafeX + strafeZ * strafeZ);
             double flightVerticality = 0;
             ItemStack helm = player.getCurrentArmor(3);
-            if (helm.getItem() != null && helm.getItem() instanceof IModularItem) {
+            if (helm != null && helm.getItem() instanceof IModularItem) {
                 flightVerticality = ModuleManager.computeModularProperty(helm, FlightControlModule.FLIGHT_VERTICALITY);
             }
             desiredDirection.xCoord = desiredDirection.xCoord * Math.signum(forwardkey) + strafeX * Math.signum(strafekey);
@@ -213,38 +220,38 @@ public class MusePlayerUtils {
             // Brakes
             if (player.motionY < 0 && desiredDirection.yCoord >= 0) {
                 if (-player.motionY > thrust) {
-                    totalEnergyDrain += jetEnergy * thrust;
                     player.motionY += thrust;
+                    thrustUsed += thrust;
                     thrust = 0;
                 } else {
-                    totalEnergyDrain += jetEnergy * Math.abs(player.motionY);
                     thrust -= player.motionY;
+                    thrustUsed += player.motionY;
                     player.motionY = 0;
                 }
             }
             if (player.motionY < -1) {
-                totalEnergyDrain += jetEnergy * Math.abs(1 + player.motionY);
                 thrust += 1 + player.motionY;
+                thrustUsed -= 1 + player.motionY;
                 player.motionY = -1;
             }
             if (Math.abs(player.motionX) > 0 && desiredDirection.lengthVector() == 0) {
                 if (Math.abs(player.motionX) > thrust) {
-                    totalEnergyDrain += jetEnergy * thrust;
                     player.motionX -= Math.signum(player.motionX) * thrust;
+                    thrustUsed += thrust;
                     thrust = 0;
                 } else {
-                    totalEnergyDrain += jetEnergy * Math.abs(player.motionX);
                     thrust -= Math.abs(player.motionX);
+                    thrustUsed += Math.abs(player.motionX);
                     player.motionX = 0;
                 }
             }
             if (Math.abs(player.motionZ) > 0 && desiredDirection.lengthVector() == 0) {
                 if (Math.abs(player.motionZ) > thrust) {
-                    totalEnergyDrain += jetEnergy * thrust;
                     player.motionZ -= Math.signum(player.motionZ) * thrust;
+                    thrustUsed += thrust;
                     thrust = 0;
                 } else {
-                    totalEnergyDrain += jetEnergy * Math.abs(player.motionZ);
+                    thrustUsed += Math.abs(player.motionZ);
                     thrust -= Math.abs(player.motionZ);
                     player.motionZ = 0;
                 }
@@ -257,13 +264,12 @@ public class MusePlayerUtils {
             player.motionX += vx;
             player.motionY += vy;
             player.motionZ += vz;
+            thrustUsed += thrust;
 
-            totalEnergyDrain += jetEnergy * (vx * vx + vy * vy + vz * vz);
         } else {
             Vec3 playerHorzFacing = player.getLookVec();
             playerHorzFacing.yCoord = 0;
             playerHorzFacing.normalize();
-            totalEnergyDrain += jetEnergy;
             if (forwardkey == 0) {
                 player.motionY += thrust;
             } else {
@@ -271,6 +277,7 @@ public class MusePlayerUtils {
                 player.motionX += playerHorzFacing.xCoord * thrust / root2 * Math.signum(forwardkey);
                 player.motionZ += playerHorzFacing.zCoord * thrust / root2 * Math.signum(forwardkey);
             }
+            thrustUsed += thrust;
         }
 
         // Slow the player if they are going too fast
@@ -286,7 +293,7 @@ public class MusePlayerUtils {
             player.motionZ *= ratio;
         }
         resetFloatKickTicks(player);
-        ElectricItemUtils.drainPlayerEnergy(player, totalEnergyDrain);
+        return thrustUsed;
     }
 
     public static double getWeightPenaltyRatio(double currentWeight, double capacity) {
@@ -315,12 +322,61 @@ public class MusePlayerUtils {
     }
 
     public static double getPlayerCoolingBasedOnMaterial(EntityPlayer player) {
+        double cool = 0;
         if (player.isInWater()) {
-            return 0.5;
+            cool += 0.5;
         } else if (player.isInsideOfMaterial(Material.lava)) {
             return 0;
-        } else {
-            return 0.1;
         }
+        cool += ((2.0 - getBiome(player).getFloatTemperature())/2); // Algorithm that returns a value from 0.0 -> 1.0. Biome temperature is from 0.0 -> 2.0
+        if ((int)player.posY > 128) { // If high in the air, increase cooling
+            cool += 0.5;
+        }
+        if (!player.worldObj.isDaytime() && getBiome(player).biomeName.equals("Desert")) { // If nighttime and in the desert, increase cooling
+            cool += 0.8;
+        }
+        if (player.worldObj.isRaining()) {
+            cool += 0.2;
+        }
+        return cool;
+    }
+
+    public static BiomeGenBase getBiome(EntityPlayer player) {
+        Chunk chunk = player.worldObj.getChunkFromBlockCoords((int) player.posX, (int) player.posZ);
+        return chunk.getBiomeGenForWorldCoords((int) player.posX & 15, (int) player.posZ & 15, player.worldObj.getWorldChunkManager());
+    }
+
+    public static void setFOVMult(EntityPlayer player, float fovmult) {
+        Field movementfactor = getMovementFactorField();
+        try {
+            movementfactor.set(player, fovmult);
+        } catch (IllegalAccessException e) {
+            MuseLogger.logDebug("illegalAccessException");
+        }
+    }
+
+
+    protected static Field movementfactorfieldinstance;
+
+    public static Field getMovementFactorField() {
+        if (movementfactorfieldinstance == null) {
+            try {
+                movementfactorfieldinstance = EntityPlayer.class.getDeclaredField("speedOnGround");
+                movementfactorfieldinstance.setAccessible(true);
+            } catch (NoSuchFieldException e) {
+                try {
+                    movementfactorfieldinstance = EntityPlayer.class.getDeclaredField("field_71108_cd");
+                    movementfactorfieldinstance.setAccessible(true);
+                } catch (NoSuchFieldException e1) {
+                    try {
+                        movementfactorfieldinstance = EntityPlayer.class.getDeclaredField("ci");
+                        movementfactorfieldinstance.setAccessible(true);
+                    } catch (NoSuchFieldException e2) {
+                        MuseLogger.logDebug("Getting failed");
+                    }
+                }
+            }
+        }
+        return movementfactorfieldinstance;
     }
 }

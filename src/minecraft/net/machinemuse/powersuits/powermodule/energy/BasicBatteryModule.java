@@ -1,8 +1,7 @@
 package net.machinemuse.powersuits.powermodule.energy;
 
 import net.machinemuse.api.IModularItem;
-import net.machinemuse.api.electricity.IC2ElectricAdapter;
-import net.machinemuse.api.electricity.PowerConversions;
+import net.machinemuse.api.electricity.ElectricConversions;
 import net.machinemuse.powersuits.item.ItemComponent;
 import net.machinemuse.powersuits.powermodule.PowerModuleBase;
 import net.machinemuse.utils.ElectricItemUtils;
@@ -17,12 +16,12 @@ public class BasicBatteryModule extends PowerModuleBase {
     public BasicBatteryModule(List<IModularItem> validItems) {
         super(validItems);
         addInstallCost(MuseItemUtils.copyAndResize(ItemComponent.lvcapacitor, 1));
-        addBaseProperty(ElectricItemUtils.MAXIMUM_ENERGY, 20000, "J");
+        addBaseProperty(ElectricItemUtils.MAXIMUM_ENERGY(), 20000, "J");
         addBaseProperty(MuseCommonStrings.WEIGHT, 2000, "g");
-        addTradeoffProperty("Battery Size", ElectricItemUtils.MAXIMUM_ENERGY, 80000);
+        addTradeoffProperty("Battery Size", ElectricItemUtils.MAXIMUM_ENERGY(), 80000);
         addTradeoffProperty("Battery Size", MuseCommonStrings.WEIGHT, 8000);
-        addBaseProperty(PowerConversions.IC2_TIER(), 1);
-        addTradeoffProperty("IC2 Tier", PowerConversions.IC2_TIER(), 2);
+        addBaseProperty(ElectricConversions.IC2_TIER(), 1);
+        addTradeoffProperty("IC2 Tier", ElectricConversions.IC2_TIER(), 2);
     }
 
     @Override

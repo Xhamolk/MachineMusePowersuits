@@ -19,7 +19,7 @@ import net.machinemuse.powersuits.block.BlockTinkerTable;
 import net.machinemuse.powersuits.entity.EntityLuxCapacitor;
 import net.machinemuse.powersuits.entity.EntityPlasmaBolt;
 import net.machinemuse.powersuits.entity.EntitySpinningBlade;
-import net.machinemuse.powersuits.event.EventHandler;
+import net.machinemuse.powersuits.event.HarvestEventHandler;
 import net.machinemuse.powersuits.event.MovementManager;
 import net.machinemuse.powersuits.item.*;
 import net.machinemuse.powersuits.network.MusePacketHandler;
@@ -35,7 +35,11 @@ import net.minecraftforge.common.MinecraftForge;
 // Informs forge that this is a base mod class, and gives it some info for the
 // FML mod list. This is also where it looks to see if your client's version
 // matches the server's.
-@Mod(modid = "mmmPowersuits", name = "MachineMuse's Modular Powersuits", version = "@MOD_VERSION@")
+@Mod(modid = "mmmPowersuits",
+        name = "MachineMuse's Modular Powersuits",
+        /* @DEPENDENCIES@ */
+        version = "@MOD_VERSION@"
+)
 // Informs forge of the requirements:
 //
 // clientSideRequired means players can't connect without it. True for things
@@ -55,7 +59,7 @@ public class ModularPowersuits {
     public static ItemPowerArmorChestplate powerArmorTorso;
     public static ItemPowerArmorLeggings powerArmorLegs;
     public static ItemPowerArmorBoots powerArmorFeet;
-    public static ItemPowerGauntlet powerTool;
+    public static ItemPowerFist powerTool;
     public static ItemComponent components;
     public static BlockTinkerTable tinkerTable;
     public static BlockLuxCapacitor luxCapacitor;
@@ -74,7 +78,7 @@ public class ModularPowersuits {
      */
     @SidedProxy(
             clientSide = "net.machinemuse.powersuits.client.ClientProxy",
-            serverSide = "net.machinemuse.powersuits.common.CommonProxy")
+            serverSide = "net.machinemuse.powersuits.common.ServerProxy")
     public static CommonProxy proxy;
 
     /**
@@ -90,9 +94,9 @@ public class ModularPowersuits {
     public void preInit(FMLPreInitializationEvent event) {
         instance = this;
         Config.init(new Configuration(event.getSuggestedConfigurationFile()));
-        MinecraftForge.EVENT_BUS.register(new EventHandler());
+        MinecraftForge.EVENT_BUS.register(new HarvestEventHandler());
         MinecraftForge.EVENT_BUS.register(new MovementManager());
-        proxy.registerSounds();
+        proxy.registerEvents();
     }
 
     public static Config config;
@@ -114,7 +118,7 @@ public class ModularPowersuits {
         powerArmorTorso = new ItemPowerArmorChestplate(Config.chestID);
         powerArmorLegs = new ItemPowerArmorLeggings(Config.legsID);
         powerArmorFeet = new ItemPowerArmorBoots(Config.bootsID);
-        powerTool = new ItemPowerGauntlet();
+        powerTool = new ItemPowerFist();
         tinkerTable = new BlockTinkerTable();
         luxCapacitor = new BlockLuxCapacitor();
         components = new ItemComponent();
@@ -129,6 +133,16 @@ public class ModularPowersuits {
         Config.useMouseWheel();
         Config.useGraphicalMeters();
         Config.getSalvageChance();
+        Config.baseMaxHeat();
+        Config.allowConflictingKeybinds();
+        Config.fontURI();
+        Config.fontName();
+        Config.fontDetail();
+        Config.fontAntiAliasing();
+        Config.useCustomFonts();
+        Config.useSounds();
+        Config.glowMultiplier();
+        Config.useShaders();
 
         EntityRegistry.registerModEntity(EntityPlasmaBolt.class, "entityPlasmaBolt", 2477, this, 64, 20, true);
         EntityRegistry.registerModEntity(EntitySpinningBlade.class, "entitySpinningBlade", 2478, this, 64, 20, true);

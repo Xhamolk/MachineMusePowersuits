@@ -8,7 +8,6 @@ import net.machinemuse.api.ModuleManager;
 import net.machinemuse.powersuits.block.BlockLuxCapacitor;
 import net.machinemuse.powersuits.block.BlockTinkerTable;
 import net.machinemuse.powersuits.item.ItemComponent;
-import net.machinemuse.powersuits.item.ItemPowerGauntlet;
 import net.machinemuse.powersuits.powermodule.armor.BasicPlatingModule;
 import net.machinemuse.powersuits.powermodule.armor.DiamondPlatingModule;
 import net.machinemuse.powersuits.powermodule.armor.EnergyShieldModule;
@@ -25,7 +24,6 @@ import net.machinemuse.powersuits.powermodule.weapon.PlasmaCannonModule;
 import net.machinemuse.powersuits.powermodule.weapon.RailgunModule;
 import net.machinemuse.utils.MuseStringUtils;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.Configuration;
 import org.lwjgl.input.Keyboard;
 
@@ -65,6 +63,7 @@ public class Config {
     public static int chestID;
     public static int legsID;
     public static int bootsID;
+    public static int fistID;
 
     private static Configuration config;
 
@@ -87,7 +86,7 @@ public class Config {
         chestID = config.getItem("Power Armor Torso", 24772).getInt();
         legsID = config.getItem("Power Armor Legs", 24773).getInt();
         bootsID = config.getItem("Power Armor Feet", 24774).getInt();
-        ItemPowerGauntlet.assignedItemID = config.getItem("Power Tool", 24775).getInt();
+        fistID = config.getItem("Power Tool", 24775).getInt();
 
         config.save();
     }
@@ -151,20 +150,6 @@ public class Config {
         return config.get(Configuration.CATEGORY_GENERAL, "Debugging info", false).getBoolean(false);
     }
 
-    /**
-     * Helper function for making recipes. Returns a copy of the itemstack with
-     * the specified stacksize.
-     *
-     * @param stack  Itemstack to copy
-     * @param number New Stacksize
-     * @return A new itemstack with the specified properties
-     */
-    public static ItemStack copyAndResize(ItemStack stack, int number) {
-        ItemStack copy = stack.copy();
-        copy.stackSize = number;
-        return copy;
-    }
-
     public static void addModule(IPowerModule module) {
         ModuleManager.addModule(module);
     }
@@ -199,6 +184,7 @@ public class Config {
         addModule(new HoeModule(TOOLONLY));
         addModule(new LuxCapacitor(TOOLONLY));
         addModule(new OmniWrenchModule(TOOLONLY));
+        addModule(new FieldTinkerModule(TOOLONLY));
 
         // Weapon
         addModule(new MeleeAssistModule(TOOLONLY));
@@ -224,8 +210,11 @@ public class Config {
         addModule(new ShockAbsorberModule(FEETONLY));
         addModule(new WaterElectrolyzerModule(HEADONLY));
 
-        // Special
+        // Vision
+        addModule(new BinocularsModule(HEADONLY));
         addModule(new NightVisionModule(HEADONLY));
+
+        // Special
         addModule(new FlightControlModule(HEADONLY));
         addModule(new InvisibilityModule(TORSOONLY));
         addModule(new BlinkDriveModule(TOOLONLY));
@@ -234,7 +223,7 @@ public class Config {
         addModule(new CoolingSystemModule(TORSOONLY));
 
         // Cosmetic
-        addModule(new TintModule(ALLITEMS));
+        addModule(new TintModule(TOOLONLY));
         addModule(new TransparentArmorModule(ARMORONLY));
         addModule(new CosmeticGlowModule(ARMORONLY));
 
@@ -249,7 +238,7 @@ public class Config {
     public static enum Guis {
         GuiTinkerTable,
         GuiSuitManager,
-        GuiPortableCrafting;
+        GuiPortableCrafting
     }
 
     public static Configuration getConfig() {
@@ -282,4 +271,40 @@ public class Config {
     public static boolean allowConflictingKeybinds() {
         return config.get(Configuration.CATEGORY_GENERAL, "Allow Conflicting Keybinds", true).getBoolean(true);
     }
+
+    public static boolean useCustomFonts() {
+        return config.get("Font", "Use Custom Font Engine", true).getBoolean(true);
+    }
+
+    public static boolean useSounds() {
+        return config.get(Configuration.CATEGORY_GENERAL, "Use Sounds", true).getBoolean(true);
+    }
+
+    public static double fontDetail() {
+        return config.get("Font", "Font Detail Multiplier", 4).getDouble(4);
+    }
+
+    public static String fontURI() {
+        // Chemical Reaction A -BRK-, retreived from http://www.fontpalace.com/
+        return config.get("Font", "Font URI", Config.RESOURCE_PREFIX + "fonts/cra.ttf").getString();
+    }
+
+    public static String fontName() {
+        return config.get("Font", "Native Font Name (Overrides URI)", "").getString();
+    }
+
+
+    public static boolean fontAntiAliasing() {
+        return config.get("Font", "Font Anti-Aliasing", false).getBoolean(false);
+    }
+
+    public static int glowMultiplier() {
+        return config.get("Graphics", "Bloom Multiplier", 3).getInt(3);
+    }
+
+    public static boolean useShaders() {
+        return config.get("Graphics", "Use Pixel/Vertex Shaders", true).getBoolean(true);
+    }
+
+    public static boolean canUseShaders = false;
 }
